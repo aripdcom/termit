@@ -12,6 +12,16 @@
   border-radius: 8px;
 }
 
+.tab-row.dragging {
+  opacity: 0.35;
+}
+.tab-row.drop-before {
+  box-shadow: inset 0 3px 0 0 @accent_bg_color;
+}
+.tab-row.drop-after {
+  box-shadow: inset 0 -3px 0 0 @accent_bg_color;
+}
+
 .tab-title {
   font-weight: 600;
 }

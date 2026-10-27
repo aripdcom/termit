@@ -133,8 +133,12 @@ class Sidebar(Gtk.Box):
         scroller.set_child(self.list)
 
         drop = Gtk.DropTarget.new(GObject.TYPE_STRING, Gdk.DragAction.MOVE)
+        drop.connect("enter", self._on_drag_motion)
+        drop.connect("motion", self._on_drag_motion)
+        drop.connect("leave", lambda *_a: self._clear_drop_indicator())
         drop.connect("drop", self._on_drop)
         self.list.add_controller(drop)
+        self._indicator_row = None
 
         footer = Gtk.Box(spacing=4)
         footer.set_margin_start(6)
@@ -212,7 +216,10 @@ class Sidebar(Gtk.Box):
     # -- context menu ----------------------------------------------------------
     def _attach_menu(self, row):
         gesture = Gtk.GestureClick(button=3)
-        gesture.connect("pressed", self._on_row_right_click, row)
+        gesture.connect("pressed", lambda g, *_a: g.set_state(Gtk.EventSequenceState.CLAIMED))
+        # Open the menu on release: opening it on press would place the first
+        # item under the pointer and the release would activate it immediately.
+        gesture.connect("released", self._on_row_right_click, row)
         row.add_controller(gesture)
 
     def _on_row_right_click(self, gesture, n_press, x, y, row):
@@ -248,26 +255,61 @@ class Sidebar(Gtk.Box):
         source = Gtk.DragSource(actions=Gdk.DragAction.MOVE)
         source.connect("prepare", self._on_drag_prepare, row)
         source.connect("drag-begin", self._on_drag_begin, row)
+        source.connect("drag-end", self._on_drag_end, row)
         row.add_controller(source)
 
     def _on_drag_prepare(self, source, x, y, row):
+        self._drag_hotspot = (int(x), int(y))
         value = GObject.Value(GObject.TYPE_STRING, row.session.id)
         return Gdk.ContentProvider.new_for_value(value)
 
     def _on_drag_begin(self, source, drag, row):
         paintable = Gtk.WidgetPaintable.new(row)
-        source.set_icon(paintable, 0, 0)
+        hx, hy = getattr(self, "_drag_hotspot", (0, 0))
+        source.set_icon(paintable, hx, hy)
+        row.add_css_class("dragging")
+
+    def _on_drag_end(self, source, drag, delete_data, row):
+        row.remove_css_class("dragging")
+        self._clear_drop_indicator()
+
+    def _drop_position(self, y):
+        """Return (insert index, row to mark, mark below?) for a pointer y in the list."""
+        rows = self.rows()
+        row = self.list.get_row_at_y(int(y))
+        if row is None or not rows:
+            return len(rows), rows[-1] if rows else None, True
+        ok, bounds = row.compute_bounds(self.list)
+        top = bounds.get_y() if ok else 0
+        below = (y - top) > row.get_height() / 2
+        return row.get_index() + (1 if below else 0), row, below
+
+    def _clear_drop_indicator(self):
+        if self._indicator_row is not None:
+            self._indicator_row.remove_css_class("drop-before")
+            self._indicator_row.remove_css_class("drop-after")
+            self._indicator_row = None
+
+    def _on_drag_motion(self, target, x, y):
+        _index, row, below = self._drop_position(y)
+        if row is not self._indicator_row:
+            self._clear_drop_indicator()
+        if row is not None:
+            row.remove_css_class("drop-before")
+            row.remove_css_class("drop-after")
+            row.add_css_class("drop-after" if below else "drop-before")
+            self._indicator_row = row
+        return Gdk.DragAction.MOVE
 
     def _on_drop(self, target, value, x, y):
+        self._clear_drop_indicator()
         session_id = str(value)
         dragged = next((s for s in self.sessions() if s.id == session_id), None)
         if dragged is None:
             return False
-        target_row = self.list.get_row_at_y(int(y))
-        rows = self.rows()
-        if target_row is None:
-            new_index = len(rows) - 1
-        else:
-            new_index = target_row.get_index()
-        self.move_session(dragged, new_index)
+        insert_index, _row, _below = self._drop_position(y)
+        old_index = self.index_of(dragged)
+        if old_index < insert_index:
+            insert_index -= 1
+        self.move_session(dragged, insert_index)
         return True
