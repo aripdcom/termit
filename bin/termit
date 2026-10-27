@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+"""Launcher used when running Termit from a source checkout."""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from termit.main import main  # noqa: E402
+
+sys.exit(main())

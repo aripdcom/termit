@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=Termit
+GenericName=Terminal
+Comment=A GNOME-style terminal with vertical tabs and per-tab notes
+Exec=termit
+Icon=com.aripdcom.Termit
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;System;TerminalEmulator;
+Keywords=shell;prompt;command;commandline;cmd;notes;claude;
+StartupNotify=true
+X-GNOME-UsesNotifications=true
+Actions=new-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=termit

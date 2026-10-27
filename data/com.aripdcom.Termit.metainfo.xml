@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.aripdcom.Termit</id>
+  <name>Termit</name>
+  <summary>A GNOME-style terminal with vertical tabs and per-tab notes</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer_name>aripdcom</developer_name>
+  <description>
+    <p>
+      Termit is a terminal emulator built with GTK 4, libadwaita and VTE. It keeps its tabs in a
+      vertical sidebar, attaches a note to every tab, shows which program is running in each tab,
+      and ships with conveniences for working alongside AI coding agents such as Claude Code.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.aripdcom.Termit.desktop</launchable>
+  <url type="homepage">https://termit.aripd.com</url>
+  <url type="bugtracker">https://github.com/aripdcom/termit/issues</url>
+  <url type="vcs-browser">https://github.com/aripdcom/termit</url>
+  <content_rating type="oars-1.1"/>
+</component>

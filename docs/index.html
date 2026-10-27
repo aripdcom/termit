@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termit — a GNOME-style terminal with vertical tabs and notes</title>
+  <meta name="description" content="Termit is an open source terminal for Linux built with GTK 4, libadwaita and VTE. Vertical tabs, a note on every tab, and conveniences for working with Claude Code.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Termit">
+  <meta property="og:description" content="A GNOME-style terminal with vertical tabs and per-tab notes.">
+  <meta property="og:image" content="https://termit.aripd.com/screenshots/termit-dark.png">
+  <style>
+    :root {
+      --bg: #fafafa; --fg: #1c1b1f; --muted: #5d5c63; --card: #ffffff; --border: rgba(0,0,0,.10);
+      --accent: #3584e4; --accent-fg: #ffffff; --code-bg: #f1f1f3; --note: #f5c211;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1e; --fg: #f0f0f0; --muted: #a9a8ad; --card: #2a2a2a; --border: rgba(255,255,255,.12);
+        --accent: #78aeed; --accent-fg: #0b1a2b; --code-bg: #171717;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Cantarell", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); line-height: 1.55; }
+    a { color: var(--accent); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    header { padding: 56px 0 24px; text-align: center; }
+    header img { width: 108px; height: 108px; }
+    h1 { font-size: 2.6rem; margin: 12px 0 6px; letter-spacing: -.02em; }
+    .tagline { font-size: 1.2rem; color: var(--muted); max-width: 640px; margin: 0 auto 24px; }
+    .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 10px 20px; border-radius: 999px; text-decoration: none; font-weight: 600; border: 1px solid var(--border); background: var(--card); color: var(--fg); }
+    .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+    .shot { margin: 36px auto 0; max-width: 960px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+    .shot img { display: block; width: 100%; height: auto; }
+    .shot picture { display: block; }
+    section { padding: 48px 0 8px; }
+    h2 { font-size: 1.7rem; margin: 0 0 18px; letter-spacing: -.01em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .card p { margin: 0; color: var(--muted); }
+    pre, code { font-family: "Source Code Pro", "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: .92em; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
+    code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+    pre code { background: none; padding: 0; }
+    kbd { font-family: inherit; font-size: .85em; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--border); background: var(--card); }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    td:first-child { white-space: nowrap; width: 42%; }
+    footer { padding: 48px 0 40px; color: var(--muted); text-align: center; font-size: .95rem; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; background: rgba(53,132,228,.15); color: var(--accent); font-size: .85em; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <img src="icon.svg" alt="">
+    <h1>Termit</h1>
+    <p class="tagline">A GNOME-style terminal with vertical tabs and a note on every tab. Built with GTK 4, libadwaita and VTE — made for people who share their terminal with Claude Code.</p>
+    <div class="buttons">
+      <a class="btn primary" href="https://github.com/aripdcom/termit#installation">Install</a>
+      <a class="btn" href="https://github.com/aripdcom/termit">Source on GitHub</a>
+    </div>
+    <div class="shot">
+      <picture>
+        <source srcset="screenshots/termit-dark.png" media="(prefers-color-scheme: dark)">
+        <img src="screenshots/termit-light.png" alt="Termit window with the tab sidebar, a terminal and the notes pane">
+      </picture>
+    </div>
+  </header>
+
+  <section class="wrap">
+    <h2>Why another terminal?</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Vertical tabs</h3>
+        <p>Tabs live in a sidebar on the left or right. Each one shows its folder, a colour label, the program that is running and for how long — <code>claude · 12m</code> at a glance.</p>
+      </div>
+      <div class="card">
+        <h3>Notes per tab</h3>
+        <p>Every tab carries its own note: the plan, open questions, follow-ups. Notes autosave, survive restarts and are archived rather than lost when the tab closes.</p>
+      </div>
+      <div class="card">
+        <h3>Knows what is going on</h3>
+        <p>Activity dots for background output, a warning dot and a desktop notification when a tab rings the bell — for example when Claude Code waits for your answer.</p>
+      </div>
+      <div class="card">
+        <h3>Still a real terminal</h3>
+        <p>VTE emulation like GNOME Terminal, Ctrl+click links and file paths, regex search, zoom, scrollback, seven palettes, light and dark mode that follows the system.</p>
+      </div>
+      <div class="card">
+        <h3>Snippets</h3>
+        <p>A menu for the commands you type all day. Ships with <code>claude</code>, <code>claude --continue</code>, <code>claude --resume</code> and common git commands.</p>
+      </div>
+      <div class="card">
+        <h3>Smart paste</h3>
+        <p>Warns before pasting several lines into the shell, but stays out of the way while a program is in the foreground — long prompts paste without friction.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>Install</h2>
+    <p>Termit needs Python 3, GTK 4, libadwaita 1.4+ and VTE 0.72+ (GTK 4 build).</p>
+    <pre><code># Debian / Ubuntu
+sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-vte-3.91
+# Fedora
+sudo dnf install python3-gobject gtk4 libadwaita vte291-gtk4
+# Arch Linux
+sudo pacman -S python-gobject gtk4 libadwaita vte4
+
+git clone https://github.com/aripdcom/termit.git
+cd termit
+make install        # installs to ~/.local</code></pre>
+  </section>
+
+  <section class="wrap">
+    <h2>Working with Claude Code</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Get notified</h3>
+        <p>Let Claude Code ring the terminal bell and Termit will flag the tab and send a desktop notification when it needs you:</p>
+        <pre><code>claude config set --global preferredNotifChannel terminal_bell</code></pre>
+      </div>
+      <div class="card">
+        <h3>Keep context next to the session</h3>
+        <p>Write the task, decisions and follow-ups into the tab's note. Close the tab and the note moves to the archive; open the folder again and Termit offers to bring it back.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>Keyboard shortcuts</h2>
+    <table>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> / <kbd>W</kbd></td><td>New tab / close tab</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td><td>Show or hide the tab sidebar</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd></td><td>Show or hide notes</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> / <kbd>Esc</kbd></td><td>Focus the note editor / back to the terminal</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></td><td>Snippets</td></tr>
+      <tr><td><kbd>Alt</kbd>+<kbd>1</kbd> … <kbd>9</kbd></td><td>Switch to tab 1–9</td></tr>
+      <tr><td><kbd>F2</kbd></td><td>Rename tab</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Find in the terminal</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>?</kbd></td><td>All shortcuts</td></tr>
+    </table>
+  </section>
+
+  <footer class="wrap">
+    Termit is free and open source software under the MIT License ·
+    <a href="https://github.com/aripdcom/termit">GitHub</a> ·
+    <a href="https://github.com/aripdcom/termit/issues">Issues</a>
+  </footer>
+</body>
+</html>

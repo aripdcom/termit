@@ -1,0 +1,102 @@
+/* Termit application styles */
+
+.sidebar-pane {
+  background-color: @sidebar_bg_color;
+}
+
+.new-tab-button {
+  padding: 6px 10px;
+}
+
+.tab-row {
+  border-radius: 8px;
+}
+
+.tab-title {
+  font-weight: 600;
+}
+
+.tab-sub {
+  font-size: 0.85em;
+  opacity: 0.65;
+}
+
+.pill {
+  font-size: 0.72em;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: alpha(@accent_bg_color, 0.18);
+  color: @accent_color;
+}
+
+.color-dot {
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 50%;
+}
+.color-dot.red    { background: #e01b24; }
+.color-dot.orange { background: #ff7800; }
+.color-dot.yellow { background: #f5c211; }
+.color-dot.green  { background: #2ec27e; }
+.color-dot.blue   { background: #3584e4; }
+.color-dot.purple { background: #9141ac; }
+
+.status-dot {
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 50%;
+  background: @accent_bg_color;
+}
+.status-dot.attention {
+  background: @warning_bg_color;
+  box-shadow: 0 0 0 3px alpha(@warning_bg_color, 0.3);
+}
+
+.tab-close {
+  opacity: 0;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 2px;
+}
+row:hover .tab-close,
+row:selected .tab-close,
+.tab-close:focus-visible {
+  opacity: 1;
+}
+
+vte-terminal {
+  padding: 6px 8px;
+}
+
+.notes-pane {
+  background-color: @view_bg_color;
+}
+.notes-pane.notes-right {
+  border-left: 1px solid alpha(currentColor, 0.15);
+}
+.notes-pane.notes-bottom {
+  border-top: 1px solid alpha(currentColor, 0.15);
+}
+
+.notes-header {
+  padding: 6px 8px;
+  border-bottom: 1px solid alpha(currentColor, 0.12);
+}
+
+.notes-footer {
+  padding: 3px 10px;
+  border-top: 1px solid alpha(currentColor, 0.12);
+}
+
+.notes-text {
+  font-size: 1.02em;
+}
+
+.shortcut-key {
+  font-family: monospace;
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: alpha(currentColor, 0.08);
+}

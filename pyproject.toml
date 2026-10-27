@@ -1,0 +1,48 @@
+[project]
+name = "termit"
+version = "0.1.0"
+description = "A GNOME-style terminal with vertical tabs and per-tab notes"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "aripdcom" }]
+keywords = ["terminal", "gtk4", "libadwaita", "vte", "notes", "claude-code"]
+classifiers = [
+  "Environment :: X11 Applications :: GTK",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Terminals :: Terminal Emulators/X Terminals",
+]
+# PyGObject, GTK 4, libadwaita and VTE come from the distribution packages;
+# see README.md for the package names.
+dependencies = []
+
+[project.urls]
+Homepage = "https://termit.aripd.com"
+Repository = "https://github.com/aripdcom/termit"
+Issues = "https://github.com/aripdcom/termit/issues"
+
+[project.scripts]
+termit = "termit.main:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["termit*"]
+
+[tool.setuptools.package-data]
+termit = ["resources/*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E402"]
+
+[tool.ruff.lint.per-file-ignores]
+"termit/translations_tr.py" = ["E501"]

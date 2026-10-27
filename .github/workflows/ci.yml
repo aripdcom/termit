@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GTK, libadwaita and VTE
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-vte-3.91 xvfb
+      - name: Lint
+        run: |
+          python3 -m pip install --user ruff
+          python3 -m ruff check termit
+      - name: Import check
+        run: xvfb-run -a python3 -c "import termit.main"
+      - name: Smoke test
+        run: xvfb-run -a python3 tests/smoke_test.py
