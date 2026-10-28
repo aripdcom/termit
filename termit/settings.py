@@ -40,6 +40,7 @@ DEFAULTS = {
     "custom_command": "",           # empty = $SHELL
     "login_shell": False,
     "scrollback_lines": 10000,
+    "scroll_lines": 3,              # lines per mouse wheel step
     "scroll_on_output": False,
     "scroll_on_keystroke": True,
     "audible_bell": False,

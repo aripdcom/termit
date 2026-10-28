@@ -152,6 +152,8 @@ TR = {
     "Save": "Kaydet",
     "Saved": "Kaydedildi",
     "Scroll on keystroke": "Tuşa basınca kaydır",
+    "Lines per mouse wheel step": "Fare tekerleği adımı başına satır",
+    "GNOME Terminal scrolls 3 lines": "GNOME Terminal 3 satır kaydırır",
     "Scroll on output": "Çıktıda kaydır",
     "Scrollback lines": "Geçmiş satır sayısı",
     "Select All": "Tümünü Seç",
