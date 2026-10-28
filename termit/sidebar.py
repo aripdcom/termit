@@ -69,6 +69,8 @@ class TabRow(Gtk.ListBoxRow):
 
     def refresh(self):
         s = self.session
+        if self._sidebar_filtering():
+            self.changed()  # re-evaluate the search filter for this row
         self.title.set_text(s.display_title)
         self.title.set_tooltip_text(s.window_title or s.display_title)
         self.subtitle.set_text(s.short_cwd or "")
@@ -92,17 +94,32 @@ class TabRow(Gtk.ListBoxRow):
             self.status_dot.remove_css_class("attention")
 
 
+    def _sidebar_filtering(self):
+        sidebar = self.get_ancestor(Sidebar)
+        return sidebar is not None and sidebar.search_active()
+
+    def matches(self, tokens):
+        s = self.session
+        haystack = " ".join((
+            s.display_title, s.window_title or "", s.short_cwd, s.cwd, s.fg_process or "", s.note_text(),
+        )).lower()
+        return all(token in haystack for token in tokens)
+
+
 class Sidebar(Gtk.Box):
     __gsignals__ = {
         "tab-selected": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "tab-close-requested": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "tab-reordered": (GObject.SignalFlags.RUN_FIRST, None, (object, int)),
+        "tab-activated": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+        "search-closed": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("sidebar-pane")
         self._selecting = False
+        self._quiet_select = False
 
         new_tab = Gtk.Button()
         new_tab.set_action_name("win.new-tab")
@@ -116,10 +133,38 @@ class Sidebar(Gtk.Box):
         shortcut.add_css_class("caption")
         content.append(shortcut)
         new_tab.set_child(content)
-        new_tab.set_margin_top(6)
-        new_tab.set_margin_start(6)
-        new_tab.set_margin_end(6)
-        self.append(new_tab)
+        new_tab.set_hexpand(True)
+
+        header = Gtk.Box(spacing=2)
+        header.set_margin_top(6)
+        header.set_margin_start(6)
+        header.set_margin_end(6)
+        header.append(new_tab)
+        self.search_button = Gtk.ToggleButton()
+        self.search_button.set_icon_name("edit-find-symbolic")
+        self.search_button.add_css_class("flat")
+        self.search_button.set_tooltip_text(_("Find Tab (Ctrl+Shift+L)"))
+        self.search_button.connect("toggled", self._on_search_toggled)
+        header.append(self.search_button)
+        self.append(header)
+
+        self.search_revealer = Gtk.Revealer()
+        self.search_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text(_("Filter tabs…"))
+        self.search_entry.set_margin_start(6)
+        self.search_entry.set_margin_end(6)
+        self.search_entry.set_margin_top(4)
+        self.search_entry.set_margin_bottom(2)
+        self.search_entry.connect("search-changed", self._on_search_changed)
+        self.search_entry.connect("activate", self._on_search_activate)
+        self.search_entry.connect("stop-search", lambda e: self.hide_search())
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self._on_search_key)
+        self.search_entry.add_controller(keys)
+        self.search_revealer.set_child(self.search_entry)
+        self.append(self.search_revealer)
+        self._tokens = []
 
         scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -130,6 +175,7 @@ class Sidebar(Gtk.Box):
         self.list.add_css_class("navigation-sidebar")
         self.list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.list.connect("row-selected", self._on_row_selected)
+        self.list.set_filter_func(self._filter_row)
         scroller.set_child(self.list)
 
         drop = Gtk.DropTarget.new(GObject.TYPE_STRING, Gdk.DragAction.MOVE)
@@ -212,6 +258,77 @@ class Sidebar(Gtk.Box):
     def _on_row_selected(self, listbox, row):
         if row is not None and not self._selecting:
             self.emit("tab-selected", row.session)
+
+    def quiet_selection(self):
+        """True while the search entry is driving the selection."""
+        return self._quiet_select
+
+    # -- search / filter -------------------------------------------------------
+    def search_active(self):
+        return bool(self._tokens)
+
+    def show_search(self):
+        self.search_button.set_active(True)
+        self.search_entry.grab_focus()
+        self.search_entry.select_region(0, -1)
+
+    def hide_search(self):
+        self.search_button.set_active(False)
+
+    def _on_search_toggled(self, button):
+        active = button.get_active()
+        self.search_revealer.set_reveal_child(active)
+        if active:
+            self.search_entry.grab_focus()
+        else:
+            self.search_entry.set_text("")
+            self._apply_filter("")
+            self.emit("search-closed")
+
+    def _on_search_changed(self, entry):
+        self._apply_filter(entry.get_text())
+
+    def _apply_filter(self, text):
+        self._tokens = [t for t in text.lower().split() if t]
+        self.list.invalidate_filter()
+        if self._tokens:
+            visible = self.visible_rows()
+            selected = self.list.get_selected_row()
+            if visible and (selected is None or selected not in visible):
+                self._select_quietly(visible[0])
+
+    def _filter_row(self, row):
+        return not self._tokens or row.matches(self._tokens)
+
+    def visible_rows(self):
+        return [row for row in self.rows() if self._filter_row(row)]
+
+    def _select_quietly(self, row):
+        """Select a row without the window stealing focus from the search entry."""
+        self._quiet_select = True
+        self.list.select_row(row)
+        self._quiet_select = False
+
+    def _on_search_key(self, controller, keyval, keycode, state):
+        if keyval not in (Gdk.KEY_Up, Gdk.KEY_Down):
+            return False
+        visible = self.visible_rows()
+        if not visible:
+            return True
+        selected = self.list.get_selected_row()
+        index = visible.index(selected) if selected in visible else -1
+        index = (index + (1 if keyval == Gdk.KEY_Down else -1)) % len(visible)
+        self._select_quietly(visible[index])
+        return True
+
+    def _on_search_activate(self, entry):
+        selected = self.list.get_selected_row()
+        visible = self.visible_rows()
+        if selected not in visible and visible:
+            selected = visible[0]
+        self.hide_search()
+        if selected is not None:
+            self.emit("tab-activated", selected.session)
 
     # -- context menu ----------------------------------------------------------
     def _attach_menu(self, row):

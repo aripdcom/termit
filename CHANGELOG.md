@@ -5,6 +5,14 @@ All notable changes to Termit are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Tab search in the sidebar (Ctrl+Shift+L) matching title, folder, running process and note text.
+
+### Fixed
+- Right-clicking a tab no longer activates the first menu item immediately.
+- Dragging a tab now shows an insertion indicator.
+- GitHub Actions updated to Node 24 releases.
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

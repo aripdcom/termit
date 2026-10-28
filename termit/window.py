@@ -110,7 +110,9 @@ class TermitWindow(Adw.ApplicationWindow):
         toolbar_view.set_content(self.split_view)
 
         self.sidebar = Sidebar()
-        self.sidebar.connect("tab-selected", lambda sb, s: self.select_session(s))
+        self.sidebar.connect("tab-selected", lambda sb, s: self.select_session(s, focus=not sb.quiet_selection()))
+        self.sidebar.connect("tab-activated", lambda sb, s: self.select_session(s))
+        self.sidebar.connect("search-closed", lambda sb: self.focus_terminal())
         self.sidebar.connect("tab-close-requested", lambda sb, s: self.close_session(s))
         self.sidebar.connect("tab-reordered", lambda sb, s, i: self.save_session_state())
         self.split_view.set_sidebar(self.sidebar)
@@ -182,6 +184,7 @@ class TermitWindow(Adw.ApplicationWindow):
         menu.append_section(None, section)
         section = Gio.Menu()
         section.append(_("Find…"), "win.find")
+        section.append(_("Find Tab…"), "win.find-tab")
         section.append(_("Notes Archive…"), "win.notes-archive")
         section.append(_("Clear Scrollback"), "win.clear-scrollback")
         menu.append_section(None, section)
@@ -241,6 +244,7 @@ class TermitWindow(Adw.ApplicationWindow):
         self._add_action("find-prev", lambda *a: self.find(backwards=True))
         self._add_action("toggle-sidebar", lambda *a: self.settings.set(
             "sidebar_visible", not self.settings.get("sidebar_visible")))
+        self._add_action("find-tab", lambda *a: self._find_tab())
         self._add_action("toggle-notes", lambda *a: self.toggle_notes())
         self._add_action("focus-notes", lambda *a: self.focus_notes())
         self._add_action("notes-archive", lambda *a: dialogs.ArchiveDialog(self, self.store).present(self))
@@ -272,6 +276,7 @@ class TermitWindow(Adw.ApplicationWindow):
         ("<Control><Shift>h", "win.find-prev", None),
         ("<Control><Shift>k", "win.clear-scrollback", None),
         ("<Control><Shift>b", "win.toggle-sidebar", None),
+        ("<Control><Shift>l", "win.find-tab", None),
         ("<Control><Shift>n", "win.toggle-notes", None),
         ("<Control><Shift>e", "win.focus-notes", None),
         ("<Control><Shift>s", "win.snippets-menu", None),
@@ -352,7 +357,7 @@ class TermitWindow(Adw.ApplicationWindow):
         self.save_session_state()
         return session
 
-    def select_session(self, session):
+    def select_session(self, session, focus=True):
         if session is None or session not in self._sessions:
             return
         self._current = session
@@ -365,7 +370,8 @@ class TermitWindow(Adw.ApplicationWindow):
         self._update_window_title()
         if self.search_bar.get_search_mode():
             self._on_search_changed(self.search_entry)
-        self.focus_terminal()
+        if focus:
+            self.focus_terminal()
 
     def focus_terminal(self):
         if self._current is not None:
@@ -605,6 +611,11 @@ class TermitWindow(Adw.ApplicationWindow):
             launcher = Gtk.UriLauncher.new(uri)
         launcher.launch(self, None, done)
         return True
+
+    def _find_tab(self):
+        if not self.settings.get("sidebar_visible"):
+            self.settings.set("sidebar_visible", True)
+        self.sidebar.show_search()
 
     # --------------------------------------------------------------- search --
     def _open_search(self):

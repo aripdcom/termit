@@ -37,6 +37,7 @@ GNOME Terminal and Console are great, but when you keep ten shells open — a fe
 - Colour labels (red, orange, yellow, green, blue, purple) to group tabs visually.
 - Rename tabs (<kbd>F2</kbd>), reorder them with drag-and-drop or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Page Up/Down</kbd>, jump with <kbd>Alt</kbd>+<kbd>1</kbd>…<kbd>9</kbd>.
 - Activity dot for tabs with new output; warning dot for tabs that rang the bell.
+- Find a tab with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>: the sidebar filters by title, folder, running process and even the text of the tab's note; <kbd>↑</kbd>/<kbd>↓</kbd> and <kbd>Enter</kbd> jump to it.
 - New tabs open in the current tab's folder. Duplicate a tab with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>.
 - Confirmation before closing a tab (or the window) that still runs a program.
 - Session restore: tabs, folders, titles, colours and notes come back on the next start.
@@ -117,6 +118,7 @@ For a system-wide install use `sudo make install PREFIX=/usr/local`; `make unins
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Page Up</kbd> / <kbd>Page Down</kbd> | Move tab up / down |
 | <kbd>Alt</kbd>+<kbd>1</kbd> … <kbd>9</kbd> | Switch to tab 1–9 |
 | <kbd>F2</kbd> | Rename tab |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Find a tab (filters the sidebar) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> | Show or hide the tab sidebar |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | Show or hide notes |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> | Focus the note editor (<kbd>Esc</kbd> goes back) |

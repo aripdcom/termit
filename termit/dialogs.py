@@ -17,6 +17,7 @@ SHORTCUT_GROUPS = [
         ("Ctrl+Shift+Page Up / Page Down", _("Move tab up / down")),
         ("Alt+1 … Alt+9", _("Switch to tab 1–9")),
         ("F2", _("Rename tab")),
+        ("Ctrl+Shift+L", _("Find a tab by title, folder, process or note")),
     ]),
     (_("Panels"), [
         ("Ctrl+Shift+B", _("Show or hide the tab sidebar")),
