@@ -1,4 +1,4 @@
-"""A tab session: a terminal, its note buffer and display metadata."""
+"""A tab session: one or more terminals (split panes), a note buffer and display metadata."""
 
 import os
 import re
@@ -40,10 +40,10 @@ class TabSession(GObject.Object):
         "changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
-    def __init__(self, terminal, sid=None):
+    def __init__(self, panes, sid=None):
         super().__init__()
         self.id = sid or uuid.uuid4().hex[:12]
-        self.terminal = terminal
+        self.panes = panes
         self.note_buffer = Gtk.TextBuffer()
         self.note_buffer.set_enable_undo(True)
         self.custom_title = None
@@ -58,6 +58,23 @@ class TabSession(GObject.Object):
         self.row = None
         self.page = None
         self.created = time.time()
+
+    # -- terminals ----------------------------------------------------------
+    @property
+    def terminal(self):
+        """The active (last focused) terminal of the tab."""
+        return self.panes.active
+
+    @property
+    def terminals(self):
+        return self.panes.terminals
+
+    @property
+    def pane_count(self):
+        return len(self.panes)
+
+    def any_running(self):
+        return any(t.has_foreground_process() for t in self.terminals)
 
     # -- derived display values -------------------------------------------
     @property
@@ -96,9 +113,14 @@ class TabSession(GObject.Object):
         return self.note_buffer.get_text(start, end, True)
 
     def to_dict(self):
+        def cwd_of(terminal):
+            info = terminal.foreground_info()
+            return (info[2] if info else "") or terminal.shell_cwd() or self.cwd
+
         return {
             "id": self.id,
             "cwd": self.cwd,
             "custom_title": self.custom_title,
             "color": self.color,
+            "layout": self.panes.layout(cwd_of) if self.pane_count > 1 else None,
         }

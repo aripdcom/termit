@@ -49,6 +49,10 @@ class TabRow(Gtk.ListBoxRow):
         self.process.add_css_class("pill")
         self.process.set_visible(False)
         sub_box.append(self.process)
+        self.panes = Gtk.Label()
+        self.panes.add_css_class("tab-sub")
+        self.panes.set_visible(False)
+        sub_box.append(self.panes)
 
         self.status_dot = Gtk.Box()
         self.status_dot.add_css_class("status-dot")
@@ -78,6 +82,10 @@ class TabRow(Gtk.ListBoxRow):
         label = s.process_label
         self.process.set_text(label)
         self.process.set_visible(bool(label))
+        count = s.pane_count
+        self.panes.set_text("⊞ %d" % count)
+        self.panes.set_tooltip_text(_("{n} panes").format(n=count))
+        self.panes.set_visible(count > 1)
 
         for color in TAB_COLORS:
             self.color_dot.remove_css_class(color)

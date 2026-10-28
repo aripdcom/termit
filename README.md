@@ -42,6 +42,12 @@ GNOME Terminal and Console are great, but when you keep ten shells open — a fe
 - Confirmation before closing a tab (on by default; can be limited to tabs that still run a program) and before closing a window with running programs.
 - Session restore: tabs, folders, titles, colours and notes come back on the next start.
 
+### Split panes
+- Split the current pane to the right (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>) or downwards (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>); splits nest as deep as you like and the new pane opens in the folder of the pane you split.
+- Move between panes with <kbd>Alt</kbd>+arrow keys, close one with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> or by exiting its shell; the active pane has a thin accent outline.
+- The sidebar shows the pane count and the program running in any pane of the tab; the tab's note is shared by all its panes.
+- Pane layouts, including the split ratios and folders, are restored with the session.
+
 ### Notes
 - A notes pane to the right of or below the terminal (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>), with a "This Tab" note and a "Global" scratchpad.
 - Autosave; <kbd>Esc</kbd> returns the focus to the terminal, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> focuses the editor.
@@ -119,6 +125,9 @@ For a system-wide install use `sudo make install PREFIX=/usr/local`; `make unins
 | <kbd>Alt</kbd>+<kbd>1</kbd> … <kbd>9</kbd> | Switch to tab 1–9 |
 | <kbd>F2</kbd> | Rename tab |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Find a tab (filters the sidebar) |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> / <kbd>D</kbd> | Split the pane to the right / downwards |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd> | Close the pane |
+| <kbd>Alt</kbd>+<kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> | Move focus between panes |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> | Show or hide the tab sidebar |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | Show or hide notes |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> | Focus the note editor (<kbd>Esc</kbd> goes back) |
@@ -150,7 +159,6 @@ The interface is in English and switches to Turkish automatically when the syste
 
 ## Roadmap ideas
 
-- Split panes inside a tab
 - Tab groups / workspaces in the sidebar
 - Broadcasting input to several tabs
 - Flatpak packaging

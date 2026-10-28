@@ -1,6 +1,6 @@
 [project]
 name = "termit"
-version = "0.1.0"
+version = "0.2.0"
 description = "A GNOME-style terminal with vertical tabs and per-tab notes"
 readme = "README.md"
 license = { file = "LICENSE" }

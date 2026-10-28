@@ -28,7 +28,8 @@ XDG_CONFIG_HOME=/tmp/termit-dev/config XDG_DATA_HOME=/tmp/termit-dev/data python
 | `termit/main.py` | `Adw.Application`, command line options, app-level actions |
 | `termit/window.py` | Main window: header bar, split view, terminal stack, actions and shortcuts |
 | `termit/terminal.py` | `Vte.Terminal` subclass: spawning, links, search, paste protection, process inspection |
-| `termit/sidebar.py` | Vertical tab list with context menu and drag-and-drop |
+| `termit/panes.py` | Split-pane tree (`PaneGroup`) holding the terminals of a tab |
+| `termit/sidebar.py` | Vertical tab list with search, context menu and drag-and-drop |
 | `termit/notes.py` | Notes pane (per-tab note and global scratchpad) with autosave |
 | `termit/session.py` | `TabSession`: terminal + note buffer + display metadata |
 | `termit/storage.py` | Notes on disk, archive index, session restore file |

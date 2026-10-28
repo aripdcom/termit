@@ -19,6 +19,12 @@ SHORTCUT_GROUPS = [
         ("F2", _("Rename tab")),
         ("Ctrl+Shift+L", _("Find a tab by title, folder, process or note")),
     ]),
+    (_("Split panes"), [
+        ("Ctrl+Alt+R", _("Split the pane to the right")),
+        ("Ctrl+Alt+D", _("Split the pane downwards")),
+        ("Ctrl+Alt+W", _("Close the pane")),
+        ("Alt+← ↑ → ↓", _("Move focus between panes")),
+    ]),
     (_("Panels"), [
         ("Ctrl+Shift+B", _("Show or hide the tab sidebar")),
         ("Ctrl+Shift+N", _("Show or hide notes")),

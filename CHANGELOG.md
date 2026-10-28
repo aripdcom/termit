@@ -5,6 +5,13 @@ All notable changes to Termit are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-28
+
+### Added
+- Split panes: split a tab to the right (Ctrl+Alt+R) or downwards (Ctrl+Alt+D), move focus with
+  Alt+arrows, close a pane with Ctrl+Alt+W. Layouts are saved and restored with the session.
+- `make bump VERSION=X.Y.Z` to bump the version; the release workflow checks the tag against it.
+
 ## [0.1.0] - 2026-10-28
 
 First public release.

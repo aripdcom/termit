@@ -8,6 +8,7 @@ from gi.repository import Adw, Gio, GLib, GObject, Gtk
 from . import dialogs
 from .i18n import _
 from .notes import NotesPane
+from .panes import PaneGroup
 from .session import TAB_COLORS, TabSession
 from .sidebar import Sidebar
 from .terminal import TermitTerminal
@@ -183,6 +184,11 @@ class TermitWindow(Adw.ApplicationWindow):
         section.append(_("New Window"), "app.new-window")
         menu.append_section(None, section)
         section = Gio.Menu()
+        section.append(_("Split Right"), "win.split-right")
+        section.append(_("Split Down"), "win.split-down")
+        section.append(_("Close Pane"), "win.close-pane")
+        menu.append_section(None, section)
+        section = Gio.Menu()
         section.append(_("Find…"), "win.find")
         section.append(_("Find Tab…"), "win.find-tab")
         section.append(_("Notes Archive…"), "win.notes-archive")
@@ -245,6 +251,10 @@ class TermitWindow(Adw.ApplicationWindow):
         self._add_action("toggle-sidebar", lambda *a: self.settings.set(
             "sidebar_visible", not self.settings.get("sidebar_visible")))
         self._add_action("find-tab", lambda *a: self._find_tab())
+        self._add_action("split-right", lambda *a: self.split_pane(Gtk.Orientation.HORIZONTAL))
+        self._add_action("split-down", lambda *a: self.split_pane(Gtk.Orientation.VERTICAL))
+        self._add_action("close-pane", lambda *a: self.close_pane())
+        self._add_action("focus-pane", self._on_focus_pane, GLib.VariantType("s"))
         self._add_action("toggle-notes", lambda *a: self.toggle_notes())
         self._add_action("focus-notes", lambda *a: self.focus_notes())
         self._add_action("notes-archive", lambda *a: dialogs.ArchiveDialog(self, self.store).present(self))
@@ -288,6 +298,13 @@ class TermitWindow(Adw.ApplicationWindow):
         ("<Control>0", "win.zoom-reset", None),
         ("<Control>KP_0", "win.zoom-reset", None),
         ("F11", "win.fullscreen", None),
+        ("<Control><Alt>r", "win.split-right", None),
+        ("<Control><Alt>d", "win.split-down", None),
+        ("<Control><Alt>w", "win.close-pane", None),
+        ("<Alt>Left", "win.focus-pane", GLib.Variant("s", "left")),
+        ("<Alt>Right", "win.focus-pane", GLib.Variant("s", "right")),
+        ("<Alt>Up", "win.focus-pane", GLib.Variant("s", "up")),
+        ("<Alt>Down", "win.focus-pane", GLib.Variant("s", "down")),
     ] + [(f"<Alt>{n}", "win.switch-tab", GLib.Variant("i", n)) for n in range(1, 10)]
 
     def _build_shortcuts(self):
@@ -317,30 +334,23 @@ class TermitWindow(Adw.ApplicationWindow):
             return None
         return self._current.cwd or self._current.terminal.shell_cwd() or None
 
-    def new_tab(self, cwd=None, argv=None, session_id=None, custom_title=None, color=None, select=True):
+    def new_tab(self, cwd=None, argv=None, session_id=None, custom_title=None, color=None, select=True,
+                layout=None):
         if cwd is None and self.settings.get("new_tab_inherits_cwd"):
             cwd = self._current_cwd()
         if not cwd or not os.path.isdir(cwd):
             cwd = os.path.expanduser("~")
 
-        terminal = TermitTerminal(self.settings)
-        session = TabSession(terminal, sid=session_id)
+        panes = PaneGroup()
+        session = TabSession(panes, sid=session_id)
         session.cwd = cwd
         session.custom_title = custom_title
         session.color = color if color in TAB_COLORS else None
-        terminal.on_link_open = self._open_uri
-        terminal.on_paste_confirm = lambda text, cont: dialogs.paste_warning_dialog(self, text, cont)
-        terminal.connect("bell", self._on_bell, session)
-        terminal.connect("contents-changed", self._on_contents_changed, session)
-        terminal.connect("window-title-changed", self._on_title_changed, session)
-        terminal.connect("child-exited", self._on_child_exited, session)
-        terminal.connect("notify::current-directory-uri", self._on_cwd_uri, session)
-
-        scroller = Gtk.ScrolledWindow()
-        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scroller.set_child(terminal)
-        session.page = scroller
-        self.stack.add_named(scroller, session.id)
+        panes.connect("active-changed", self._on_active_pane_changed, session)
+        panes.connect("terminal-removed", self._on_pane_removed, session)
+        panes.connect("layout-changed", lambda g: (session.mark_changed(), self.save_session_state()))
+        session.page = panes
+        self.stack.add_named(panes, session.id)
 
         if self._current is not None and self._current in self._sessions:
             position = self._sessions.index(self._current) + 1
@@ -351,11 +361,81 @@ class TermitWindow(Adw.ApplicationWindow):
         if self.store.exists(session.id):
             self.store.mark_open(session.id)
 
-        terminal.spawn(cwd=cwd, argv=argv, session_id=session.id)
+        restored = False
+        if layout and not argv:
+            restored = panes.restore(layout, lambda pane_cwd: self._create_terminal(session, pane_cwd or cwd))
+        if not restored:
+            panes.add_terminal(self._create_terminal(session, cwd, argv))
         if select or self._current is None:
             self.select_session(session)
         self.save_session_state()
         return session
+
+    def _create_terminal(self, session, cwd, argv=None):
+        """Create, wire up and spawn a terminal that belongs to `session`."""
+        terminal = TermitTerminal(self.settings)
+        terminal.on_link_open = self._open_uri
+        terminal.on_paste_confirm = lambda text, cont: dialogs.paste_warning_dialog(self, text, cont)
+        terminal.connect("bell", self._on_bell, session)
+        terminal.connect("contents-changed", self._on_contents_changed, session)
+        terminal.connect("window-title-changed", self._on_title_changed, session)
+        terminal.connect("child-exited", self._on_child_exited, session)
+        terminal.connect("notify::current-directory-uri", self._on_cwd_uri, session)
+        if not cwd or not os.path.isdir(cwd):
+            cwd = os.path.expanduser("~")
+        terminal.spawn(cwd=cwd, argv=argv, session_id=session.id)
+        return terminal
+
+    # -- split panes -----------------------------------------------------------
+    def split_pane(self, orientation):
+        session = self._current
+        if session is None or session.terminal is None:
+            return
+        source = session.terminal
+        info = source.foreground_info()
+        cwd = (info[2] if info else "") or source.shell_cwd() or session.cwd
+        terminal = self._create_terminal(session, cwd)
+        session.panes.split(source, orientation, terminal)
+        terminal.grab_focus()
+
+    def close_pane(self):
+        session = self._current
+        if session is None or session.terminal is None:
+            return
+        if session.pane_count <= 1:
+            self.close_session(session)
+            return
+        terminal = session.terminal
+        if self.settings.get("confirm_close_running") and terminal.has_foreground_process():
+            process = session.fg_process or _("a process")
+            dialogs.confirm_dialog(
+                self, _("Close this pane?"),
+                _("“{process}” is still running in this pane.").format(process=process),
+                _("Close Pane"), lambda: self._remove_pane(session, terminal),
+            )
+            return
+        self._remove_pane(session, terminal)
+
+    def _remove_pane(self, session, terminal):
+        terminal.on_link_open = None
+        terminal.on_paste_confirm = None
+        if session.panes.remove(terminal):
+            self._finish_close(session, keep_note=(self.settings.get("notes_on_close") != "delete"))
+
+    def _on_active_pane_changed(self, panes, terminal, session):
+        session.window_title = terminal.get_window_title() or ""
+        self._refresh_session_process(session)
+        if session is self._current:
+            self._update_window_title()
+            self.notes.refresh_title()
+
+    def _on_pane_removed(self, panes, terminal, session):
+        terminal.on_link_open = None
+        terminal.on_paste_confirm = None
+
+    def _on_focus_pane(self, action, parameter):
+        if self._current is not None:
+            self._current.panes.focus_direction(parameter.get_string())
 
     def select_session(self, session, focus=True):
         if session is None or session not in self._sessions:
@@ -374,14 +454,14 @@ class TermitWindow(Adw.ApplicationWindow):
             self.focus_terminal()
 
     def focus_terminal(self):
-        if self._current is not None:
+        if self._current is not None and self._current.terminal is not None:
             self._current.terminal.grab_focus()
 
     def close_session(self, session, force=False):
         if session is None or session not in self._sessions:
             return
         if not force:
-            running = session.terminal.has_foreground_process()
+            running = session.any_running()
             if self.settings.get("confirm_close_tab") or (running and self.settings.get("confirm_close_running")):
                 dialogs.confirm_dialog(
                     self, _("Close “{title}”?").format(title=session.display_title),
@@ -405,7 +485,9 @@ class TermitWindow(Adw.ApplicationWindow):
     def _close_tab_body(self, session, running):
         parts = []
         if running:
-            process = session.fg_process or _("a process")
+            process = session.fg_process or next(
+                (t.foreground_info()[1] for t in session.terminals if t.has_foreground_process()), None,
+            ) or _("a process")
             parts.append(_("“{process}” is still running in this tab.").format(process=process))
         if session.note_text().strip():
             policy = self.settings.get("notes_on_close")
@@ -428,8 +510,9 @@ class TermitWindow(Adw.ApplicationWindow):
         self._sessions.remove(session)
         self.sidebar.remove_session(session)
         self.stack.remove(session.page)
-        session.terminal.on_link_open = None
-        session.terminal.on_paste_confirm = None
+        for terminal in session.terminals:
+            terminal.on_link_open = None
+            terminal.on_paste_confirm = None
         if self._current is session:
             self._current = None
             if self._sessions:
@@ -447,7 +530,7 @@ class TermitWindow(Adw.ApplicationWindow):
         others = [s for s in self._sessions if s is not self._current]
         if not others:
             return
-        running = [s for s in others if s.terminal.has_foreground_process()]
+        running = [s for s in others if s.any_running()]
         if self.settings.get("confirm_close_tab") or (running and self.settings.get("confirm_close_running")):
             if running:
                 body = _("{n} tabs have a running process.").format(n=len(running))
@@ -509,17 +592,17 @@ class TermitWindow(Adw.ApplicationWindow):
         self.save_session_state()
 
     def _with_terminal(self, func):
-        if self._current is not None:
+        if self._current is not None and self._current.terminal is not None:
             func(self._current.terminal)
 
     def _zoom(self, factor):
         if self._current is None:
             return
-        terminal = self._current.terminal
-        if factor is None:
-            terminal.set_font_scale(1.0)
-        else:
-            terminal.set_font_scale(max(0.4, min(4.0, terminal.get_font_scale() * factor)))
+        for terminal in self._current.terminals:
+            if factor is None:
+                terminal.set_font_scale(1.0)
+            else:
+                terminal.set_font_scale(max(0.4, min(4.0, terminal.get_font_scale() * factor)))
 
     def _on_snippet(self, action, parameter):
         index = parameter.get_int32()
@@ -550,6 +633,8 @@ class TermitWindow(Adw.ApplicationWindow):
             session.mark_changed()
 
     def _on_title_changed(self, terminal, session):
+        if terminal is not session.terminal:
+            return
         session.window_title = terminal.get_window_title() or ""
         session.mark_changed()
         if session is self._current:
@@ -557,6 +642,8 @@ class TermitWindow(Adw.ApplicationWindow):
             self.notes.refresh_title()
 
     def _on_cwd_uri(self, terminal, pspec, session):
+        if terminal is not session.terminal:
+            return
         uri = terminal.get_current_directory_uri()
         if uri:
             path = Gio.File.new_for_uri(uri).get_path()
@@ -564,8 +651,8 @@ class TermitWindow(Adw.ApplicationWindow):
                 self._set_session_cwd(session, path)
 
     def _on_child_exited(self, terminal, status, session):
-        session.terminal.exited = True
-        self._finish_close(session, keep_note=(self.settings.get("notes_on_close") != "delete"))
+        terminal.exited = True
+        self._remove_pane(session, terminal)
 
     def _set_session_cwd(self, session, cwd):
         if cwd and cwd != session.cwd:
@@ -579,34 +666,52 @@ class TermitWindow(Adw.ApplicationWindow):
 
     def _poll_sessions(self):
         for session in self._sessions:
-            info = session.terminal.foreground_info()
-            if not info:
-                continue
-            pid, comm, cwd = info
-            changed = False
-            if session.terminal.is_shell_idle(info):
-                if session.fg_process is not None:
-                    session.fg_process = None
-                    session.fg_pid = None
-                    session.fg_since = None
-                    changed = True
-            else:
-                if session.fg_pid != pid:
-                    session.fg_pid = pid
-                    session.fg_since = time.time()
-                    changed = True
-                if comm and session.fg_process != comm:
-                    session.fg_process = comm
-                    changed = True
-                changed = True  # refresh the elapsed-time label
-            if cwd and cwd != session.cwd:
-                self._set_session_cwd(session, cwd)
-                changed = True
-            if changed:
+            if self._refresh_session_process(session):
                 session.mark_changed()
                 if session is self._current:
                     self._update_window_title()
         return GLib.SOURCE_CONTINUE
+
+    def _refresh_session_process(self, session):
+        """Update the session's foreground process and folder. Returns True when something changed."""
+        active = session.terminal
+        if active is None:
+            return False
+        info = active.foreground_info()
+        if not info:
+            return False
+        pid, comm, cwd = info
+        if active.is_shell_idle(info):
+            # Prefer a program running in another pane of the same tab.
+            for terminal in session.terminals:
+                if terminal is active:
+                    continue
+                other = terminal.foreground_info()
+                if other and not terminal.is_shell_idle(other):
+                    pid, comm, _cwd = other
+                    break
+            else:
+                pid = None
+        changed = False
+        if pid is None:
+            if session.fg_process is not None:
+                session.fg_process = None
+                session.fg_pid = None
+                session.fg_since = None
+                changed = True
+        else:
+            if session.fg_pid != pid:
+                session.fg_pid = pid
+                session.fg_since = time.time()
+                changed = True
+            if comm and session.fg_process != comm:
+                session.fg_process = comm
+                changed = True
+            changed = True  # refresh the elapsed-time label
+        if cwd and cwd != session.cwd:
+            self._set_session_cwd(session, cwd)
+            changed = True
+        return changed
 
     def _update_window_title(self):
         if self._current is None:
@@ -788,7 +893,8 @@ class TermitWindow(Adw.ApplicationWindow):
 
     def _on_theme_changed(self, manager, pspec):
         for session in self._sessions:
-            session.terminal.apply_colors(manager.get_dark())
+            for terminal in session.terminals:
+                terminal.apply_colors(manager.get_dark())
 
     def _on_active_changed(self, window, pspec):
         if self.is_active() and self._current is not None and self._current.attention:
@@ -831,7 +937,7 @@ class TermitWindow(Adw.ApplicationWindow):
                 continue
             session = self.new_tab(
                 cwd=tab.get("cwd"), session_id=tab.get("id"), custom_title=tab.get("custom_title"),
-                color=tab.get("color"), select=False,
+                color=tab.get("color"), select=False, layout=tab.get("layout"),
             )
             restored.append(session)
         if not restored:
@@ -845,7 +951,7 @@ class TermitWindow(Adw.ApplicationWindow):
     def _on_close_request(self, window):
         if self._closing:
             return False
-        running = [s for s in self._sessions if s.terminal.has_foreground_process()]
+        running = [s for s in self._sessions if s.any_running()]
         if running and self.settings.get("confirm_close_running"):
             dialogs.confirm_dialog(
                 self, _("Close the window?"),
