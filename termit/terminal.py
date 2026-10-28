@@ -398,8 +398,14 @@ class TermitTerminal(Vte.Terminal):
         scrollable = adjustment.get_upper() - adjustment.get_lower() - adjustment.get_page_size()
         if scrollable <= 0.5:
             return False  # nothing to scroll: alternate screen or no history yet
-        lines = max(1, int(self.settings.get("scroll_lines") or 3))
-        self._scroll_remainder += dy * lines
+        if controller.get_unit() == Gdk.ScrollUnit.SURFACE:
+            # Touchpad: GTK reports pixels. Move the history as far as the finger moved.
+            speed = float(self.settings.get("touchpad_scroll_speed") or 1.0)
+            self._scroll_remainder += dy / max(self.get_char_height(), 1) * speed
+        else:
+            # Mouse wheel: GTK reports clicks. Scroll a fixed number of lines per click.
+            lines = max(1, int(self.settings.get("scroll_lines") or 3))
+            self._scroll_remainder += dy * lines
         step = int(self._scroll_remainder)
         if step == 0:
             return True  # a touchpad fraction; wait until it adds up to a line

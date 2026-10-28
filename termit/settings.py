@@ -41,6 +41,7 @@ DEFAULTS = {
     "login_shell": False,
     "scrollback_lines": 10000,
     "scroll_lines": 3,              # lines per mouse wheel step
+    "touchpad_scroll_speed": 1.0,   # multiplier for touchpad (pixel) scrolling
     "scroll_on_output": False,
     "scroll_on_keystroke": True,
     "audible_bell": False,

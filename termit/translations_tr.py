@@ -154,6 +154,8 @@ TR = {
     "Scroll on keystroke": "Tuşa basınca kaydır",
     "Lines per mouse wheel step": "Fare tekerleği adımı başına satır",
     "GNOME Terminal scrolls 3 lines": "GNOME Terminal 3 satır kaydırır",
+    "Touchpad scroll speed": "Touchpad kaydırma hızı",
+    "1.0 moves the text as far as your fingers move": "1.0 metni parmaklarınız kadar kaydırır",
     "Scroll on output": "Çıktıda kaydır",
     "Scrollback lines": "Geçmiş satır sayısı",
     "Select All": "Tümünü Seç",
