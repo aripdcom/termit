@@ -83,7 +83,6 @@ class TermitTerminal(Vte.Terminal):
         self._setup_matches()
         self._setup_actions()
         self._setup_gestures()
-        self._setup_scrolling()
         self.connect("setup-context-menu", self._on_setup_context_menu)
         self.connect("selection-changed", self._on_selection_changed)
         self.settings.connect("changed", self._on_settings_changed)
@@ -376,19 +375,21 @@ class TermitTerminal(Vte.Terminal):
         return False
 
     # -- mouse wheel ---------------------------------------------------------
-    def _setup_scrolling(self):
-        """Scroll the history by a fixed number of lines per wheel step.
+    def create_scroll_controller(self):
+        """Controller that scrolls the history by a fixed number of lines per wheel step.
 
         VTE's own handler scales the step with the row count, which feels much
-        faster than GNOME Terminal in tall windows. This capture-phase controller
-        takes over plain wheel events while there is history to scroll and leaves
-        everything else (alternate screen, modifiers, mouse-tracking apps) to VTE.
+        faster than GNOME Terminal in tall windows. VTE's controller sits on the
+        terminal itself, so this one must be attached to an ancestor (the pane)
+        in the capture phase to see the events first. It takes over plain wheel
+        and touchpad events while there is history to scroll and leaves the rest
+        (alternate screen, modifiers, mouse-tracking programs) to VTE.
         """
         controller = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL)
         controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
         controller.connect("scroll", self._on_scroll)
         controller.connect("scroll-end", lambda c: setattr(self, "_scroll_remainder", 0.0))
-        self.add_controller(controller)
+        return controller
 
     def _on_scroll(self, controller, dx, dy):
         modifiers = Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.ALT_MASK

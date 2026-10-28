@@ -24,12 +24,16 @@ class PaneLeaf(Gtk.Box):
         self.append(self.scrollbar)
         adjustment.connect("changed", self._update_scrollbar)
         self._update_scrollbar(adjustment)
+        # Capture wheel events before VTE's own controller on the terminal sees them.
+        self.scroll_controller = terminal.create_scroll_controller()
+        self.add_controller(self.scroll_controller)
 
     def _update_scrollbar(self, adjustment):
         scrollable = adjustment.get_upper() - adjustment.get_lower() > adjustment.get_page_size() + 0.5
         self.scrollbar.set_visible(scrollable)
 
     def detach_terminal(self):
+        self.remove_controller(self.scroll_controller)
         self.remove(self.terminal)
 
 
