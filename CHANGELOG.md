@@ -5,6 +5,10 @@ All notable changes to Termit are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Mouse wheel scrolling in the terminal was about twice as fast as in GNOME Terminal because the
+  scrolled window applied the wheel events a second time; the terminal now uses a plain scrollbar.
+
 ## [0.2.0] - 2026-10-28
 
 ### Added
