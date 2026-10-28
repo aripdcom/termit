@@ -111,7 +111,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         speed.set_value(int(s.get("scroll_lines")))
         speed.connect("notify::value", lambda r, _p: s.set("scroll_lines", int(r.get_value())))
         group.add(speed)
-        touchpad = Adw.SpinRow.new_with_range(0.25, 4.0, 0.25)
+        touchpad = Adw.SpinRow.new_with_range(0.05, 4.0, 0.05)
         touchpad.set_title(_("Touchpad scroll speed"))
         touchpad.set_subtitle(_("1.0 moves the text as far as your fingers move"))
         touchpad.set_digits(2)

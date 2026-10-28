@@ -3,6 +3,7 @@
 import os
 import re
 import shlex
+import sys
 
 import gi
 
@@ -31,6 +32,9 @@ PATH_RE = (
 )
 
 _TRAILING_PUNCT = ".,;:!?'\")]}>"
+
+# TERMIT_DEBUG_SCROLL=1 prints every wheel/touchpad event to stderr.
+DEBUG_SCROLL = bool(os.environ.get("TERMIT_DEBUG_SCROLL"))
 
 KIND_URL = "url"
 KIND_EMAIL = "email"
@@ -392,6 +396,11 @@ class TermitTerminal(Vte.Terminal):
         return controller
 
     def _on_scroll(self, controller, dx, dy):
+        if DEBUG_SCROLL:
+            adjustment = self.get_vadjustment()
+            print(f"termit scroll: unit={controller.get_unit().value_nick} dy={dy:.3f} "
+                  f"char_height={self.get_char_height()} rows={self.get_row_count()} "
+                  f"value={adjustment.get_value():.1f} upper={adjustment.get_upper():.0f}", file=sys.stderr)
         modifiers = Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.ALT_MASK
         if controller.get_current_event_state() & modifiers:
             return False
