@@ -6,6 +6,7 @@
 #   make uninstall        remove the installed files
 #   make lint             run ruff
 #   make check            compile and import check
+#   make bump VERSION=0.2.0   bump the version and prepare the changelog
 
 PREFIX ?= $(HOME)/.local
 BINDIR = $(PREFIX)/bin
@@ -16,7 +17,7 @@ METADIR = $(PREFIX)/share/metainfo
 APP_ID = com.aripdcom.Termit
 PYTHON ?= python3
 
-.PHONY: run install uninstall lint check clean
+.PHONY: run install uninstall lint check bump clean
 
 run:
 	$(PYTHON) -m termit
@@ -44,6 +45,10 @@ lint:
 check:
 	$(PYTHON) -m compileall -q termit
 	$(PYTHON) -c "import termit.main"
+
+bump:
+	@test -n "$(VERSION)" || (echo "usage: make bump VERSION=X.Y.Z" && exit 1)
+	$(PYTHON) scripts/bump_version.py $(VERSION)
 
 clean:
 	find . -name __pycache__ -type d -exec rm -rf {} +

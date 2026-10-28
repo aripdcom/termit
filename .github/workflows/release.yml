@@ -12,6 +12,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      - name: Check that the tag matches the package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(sed -n 's/^__version__ = "\([^"]*\)"/\1/p' termit/__init__.py)
+          pyproject=$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml)
+          echo "tag=$tag  __init__.py=$version  pyproject.toml=$pyproject"
+          if [ "$tag" != "$version" ] || [ "$tag" != "$pyproject" ]; then
+            echo "::error::Tag v$tag does not match the version in the sources. Run: make bump VERSION=$tag"
+            exit 1
+          fi
       - name: Extract release notes from CHANGELOG.md
         run: |
           version="${GITHUB_REF_NAME#v}"

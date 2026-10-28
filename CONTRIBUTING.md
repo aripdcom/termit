@@ -55,6 +55,22 @@ XDG_CONFIG_HOME=/tmp/termit-dev/config XDG_DATA_HOME=/tmp/termit-dev/data python
 2. Register the language in `termit/i18n.py`.
 3. Test with `LANGUAGE=<lang> python3 -m termit`.
 
+## Releasing
+
+1. Make sure the `Unreleased` section of `CHANGELOG.md` lists every user-visible change.
+2. Run `make bump VERSION=X.Y.Z`. It updates `termit/__init__.py`, `pyproject.toml` and turns the
+   `Unreleased` section into a dated `X.Y.Z` section.
+3. Commit, tag and push:
+
+   ```sh
+   git commit -am "Release X.Y.Z"
+   git tag -a vX.Y.Z -m "Termit X.Y.Z"
+   git push origin main vX.Y.Z
+   ```
+
+The `Release` workflow checks that the tag matches the version in the sources and publishes a
+GitHub release with the notes taken from the changelog.
+
 ## Reporting bugs
 
 Open an issue at https://github.com/aripdcom/termit/issues with your distribution, the versions of GTK, libadwaita and VTE (for example `pkg-config --modversion gtk4 libadwaita-1 vte-2.91-gtk4`), and the steps to reproduce. Terminal output from `python3 -m termit` is very helpful.
