@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in Termit does not work as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Termit
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution and desktop
+      placeholder: e.g. Ubuntu 24.04, GNOME 46 on Wayland
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Library versions
+      description: Output of `pkg-config --modversion gtk4 libadwaita-1 vte-2.91-gtk4`
+      placeholder: 4.14.5 / 1.5.0 / 0.76.0
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output
+      description: Start Termit with `python3 -m termit` from a terminal and paste anything it prints.
+      render: shell
