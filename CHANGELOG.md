@@ -5,23 +5,19 @@ All notable changes to Termit are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
-- Tab search in the sidebar (Ctrl+Shift+L) matching title, folder, running process and note text.
-- Confirmation dialog before closing a tab, enabled by default and configurable in Preferences.
+## [0.1.0] - 2026-10-28
 
-### Fixed
-- Right-clicking a tab no longer activates the first menu item immediately.
-- Dragging a tab now shows an insertion indicator.
-- GitHub Actions updated to Node 24 releases.
-
-## [0.1.0] - 2026-10-27
+First public release.
 
 ### Added
 - Vertical tab sidebar (left or right) with folder, colour label, running process and elapsed time.
+- Tab search in the sidebar (Ctrl+Shift+L) matching title, folder, running process and note text.
+- Drag-and-drop tab reordering with an insertion indicator, plus keyboard reordering.
 - Per-tab notes with autosave, a global scratchpad, and a notes archive for closed tabs.
 - Session restore for tabs, titles, colours and notes.
 - Light and dark mode following the system, seven colour palettes.
 - Ctrl+click for URLs, e-mail addresses and file paths; search; multi-line paste protection.
 - Snippets menu with Claude Code and git defaults.
+- Confirmation dialog before closing a tab, configurable in Preferences.
 - Desktop notification and sidebar indicator when a background tab rings the bell.
 - Turkish translation.
