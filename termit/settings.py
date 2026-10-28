@@ -47,6 +47,7 @@ DEFAULTS = {
     "paste_warning": True,
     "copy_on_select": False,
     "new_tab_inherits_cwd": True,
+    "confirm_close_tab": True,
     "confirm_close_running": True,
     # Session & notes
     "restore_session": True,

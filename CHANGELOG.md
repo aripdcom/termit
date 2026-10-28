@@ -7,6 +7,7 @@ All notable changes to Termit are documented here. The format follows
 
 ### Added
 - Tab search in the sidebar (Ctrl+Shift+L) matching title, folder, running process and note text.
+- Confirmation dialog before closing a tab, enabled by default and configurable in Preferences.
 
 ### Fixed
 - Right-clicking a tab no longer activates the first menu item immediately.

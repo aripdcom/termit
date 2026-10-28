@@ -39,7 +39,7 @@ GNOME Terminal and Console are great, but when you keep ten shells open — a fe
 - Activity dot for tabs with new output; warning dot for tabs that rang the bell.
 - Find a tab with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>: the sidebar filters by title, folder, running process and even the text of the tab's note; <kbd>↑</kbd>/<kbd>↓</kbd> and <kbd>Enter</kbd> jump to it.
 - New tabs open in the current tab's folder. Duplicate a tab with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>.
-- Confirmation before closing a tab (or the window) that still runs a program.
+- Confirmation before closing a tab (on by default; can be limited to tabs that still run a program) and before closing a window with running programs.
 - Session restore: tabs, folders, titles, colours and notes come back on the next start.
 
 ### Notes

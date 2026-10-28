@@ -61,7 +61,10 @@ class PreferencesDialog(Adw.PreferencesDialog):
         _switch(group, _("Restore tabs on startup"), s, "restore_session",
                 _("Reopen the tabs from the last session with their folders and notes."))
         _switch(group, _("New tabs open in the current folder"), s, "new_tab_inherits_cwd")
-        _switch(group, _("Confirm closing tabs with a running process"), s, "confirm_close_running")
+        _switch(group, _("Confirm before closing a tab"), s, "confirm_close_tab",
+                _("Ask every time a tab is closed from the sidebar, the menu or the keyboard."))
+        _switch(group, _("Confirm closing tabs with a running process"), s, "confirm_close_running",
+                _("Applies when the setting above is off."))
         _switch(group, _("Notify when a background tab rings the bell"), s, "bell_notification",
                 _("Claude Code can ring the terminal bell when it needs your attention."))
 

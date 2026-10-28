@@ -380,14 +380,15 @@ class TermitWindow(Adw.ApplicationWindow):
     def close_session(self, session, force=False):
         if session is None or session not in self._sessions:
             return
-        if not force and self.settings.get("confirm_close_running") and session.terminal.has_foreground_process():
-            name = session.fg_process or _("a process")
-            dialogs.confirm_dialog(
-                self, _("Close this tab?"),
-                _("“{process}” is still running in this tab.").format(process=name),
-                _("Close Tab"), lambda: self.close_session(session, force=True),
-            )
-            return
+        if not force:
+            running = session.terminal.has_foreground_process()
+            if self.settings.get("confirm_close_tab") or (running and self.settings.get("confirm_close_running")):
+                dialogs.confirm_dialog(
+                    self, _("Close “{title}”?").format(title=session.display_title),
+                    self._close_tab_body(session, running),
+                    _("Close Tab"), lambda: self.close_session(session, force=True),
+                )
+                return
         self.notes.flush()
         self.notes.save_session_note(session)
         policy = self.settings.get("notes_on_close")
@@ -400,6 +401,21 @@ class TermitWindow(Adw.ApplicationWindow):
             )
             return
         self._finish_close(session, keep_note=(policy != "delete"))
+
+    def _close_tab_body(self, session, running):
+        parts = []
+        if running:
+            process = session.fg_process or _("a process")
+            parts.append(_("“{process}” is still running in this tab.").format(process=process))
+        if session.note_text().strip():
+            policy = self.settings.get("notes_on_close")
+            if policy == "delete":
+                parts.append(_("The tab's note will be deleted."))
+            elif policy == "keep":
+                parts.append(_("The tab's note is kept in the archive."))
+        if not parts:
+            parts.append(_("The shell in this tab will be terminated."))
+        return " ".join(parts)
 
     def _finish_close(self, session, keep_note=True):
         if session not in self._sessions:
@@ -429,11 +445,16 @@ class TermitWindow(Adw.ApplicationWindow):
 
     def _on_close_other_tabs(self, *args):
         others = [s for s in self._sessions if s is not self._current]
+        if not others:
+            return
         running = [s for s in others if s.terminal.has_foreground_process()]
-        if running and self.settings.get("confirm_close_running"):
+        if self.settings.get("confirm_close_tab") or (running and self.settings.get("confirm_close_running")):
+            if running:
+                body = _("{n} tabs have a running process.").format(n=len(running))
+            else:
+                body = _("{n} tabs will be closed.").format(n=len(others))
             dialogs.confirm_dialog(
-                self, _("Close other tabs?"),
-                _("{n} tabs have a running process.").format(n=len(running)),
+                self, _("Close other tabs?"), body,
                 _("Close Tabs"), lambda: [self.close_session(s, force=True) for s in others],
             )
             return
