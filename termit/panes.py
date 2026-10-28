@@ -5,36 +5,15 @@ from gi.repository import GLib, GObject, Gtk
 DIRECTIONS = ("left", "right", "up", "down")
 
 
-class PaneLeaf(Gtk.Box):
-    """One terminal with its scrollbar.
-
-    The terminal is deliberately not placed in a Gtk.ScrolledWindow: VTE handles
-    wheel events itself (three lines per step, like GNOME Terminal) and a scrolled
-    window would scroll the same events a second time.
-    """
+class PaneLeaf(Gtk.ScrolledWindow):
+    """Scrollable wrapper around one terminal."""
 
     def __init__(self, terminal):
-        super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
+        super().__init__()
         self.terminal = terminal
+        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.set_child(terminal)
         self.add_css_class("pane-leaf")
-        self.append(terminal)
-        adjustment = terminal.get_vadjustment()
-        self.scrollbar = Gtk.Scrollbar(orientation=Gtk.Orientation.VERTICAL, adjustment=adjustment)
-        self.scrollbar.set_visible(False)
-        self.append(self.scrollbar)
-        adjustment.connect("changed", self._update_scrollbar)
-        self._update_scrollbar(adjustment)
-        # Capture wheel events before VTE's own controller on the terminal sees them.
-        self.scroll_controller = terminal.create_scroll_controller()
-        self.add_controller(self.scroll_controller)
-
-    def _update_scrollbar(self, adjustment):
-        scrollable = adjustment.get_upper() - adjustment.get_lower() > adjustment.get_page_size() + 0.5
-        self.scrollbar.set_visible(scrollable)
-
-    def detach_terminal(self):
-        self.remove_controller(self.scroll_controller)
-        self.remove(self.terminal)
 
 
 class PaneGroup(Gtk.Box):
@@ -122,7 +101,7 @@ class PaneGroup(Gtk.Box):
             self._replace_child(grand, parent, sibling)
         else:
             self.remove_child_widget(leaf)
-        leaf.detach_terminal()
+        leaf.set_child(None)
         self.emit("terminal-removed", terminal)
         if was_active:
             self.active = None

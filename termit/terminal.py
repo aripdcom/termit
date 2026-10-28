@@ -3,7 +3,6 @@
 import os
 import re
 import shlex
-import sys
 
 import gi
 
@@ -32,9 +31,6 @@ PATH_RE = (
 )
 
 _TRAILING_PUNCT = ".,;:!?'\")]}>"
-
-# TERMIT_DEBUG_SCROLL=1 prints every wheel/touchpad event to stderr.
-DEBUG_SCROLL = bool(os.environ.get("TERMIT_DEBUG_SCROLL"))
 
 KIND_URL = "url"
 KIND_EMAIL = "email"
@@ -83,7 +79,6 @@ class TermitTerminal(Vte.Terminal):
         self.set_enable_sixel(False)
         self.set_word_char_exceptions("-,.;:/@_~#%&?=+")
 
-        self._scroll_remainder = 0.0
         self._setup_matches()
         self._setup_actions()
         self._setup_gestures()
@@ -377,53 +372,6 @@ class TermitTerminal(Vte.Terminal):
         if self.on_link_open:
             return bool(self.on_link_open(uri))
         return False
-
-    # -- mouse wheel ---------------------------------------------------------
-    def create_scroll_controller(self):
-        """Controller that scrolls the history by a fixed number of lines per wheel step.
-
-        VTE's own handler scales the step with the row count, which feels much
-        faster than GNOME Terminal in tall windows. VTE's controller sits on the
-        terminal itself, so this one must be attached to an ancestor (the pane)
-        in the capture phase to see the events first. It takes over plain wheel
-        and touchpad events while there is history to scroll and leaves the rest
-        (alternate screen, modifiers, mouse-tracking programs) to VTE.
-        """
-        controller = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL)
-        controller.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-        controller.connect("scroll", self._on_scroll)
-        controller.connect("scroll-end", lambda c: setattr(self, "_scroll_remainder", 0.0))
-        return controller
-
-    def _on_scroll(self, controller, dx, dy):
-        if DEBUG_SCROLL:
-            adjustment = self.get_vadjustment()
-            print(f"termit scroll: unit={controller.get_unit().value_nick} dy={dy:.3f} "
-                  f"char_height={self.get_char_height()} rows={self.get_row_count()} "
-                  f"value={adjustment.get_value():.1f} upper={adjustment.get_upper():.0f}", file=sys.stderr)
-        modifiers = Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.ALT_MASK
-        if controller.get_current_event_state() & modifiers:
-            return False
-        adjustment = self.get_vadjustment()
-        scrollable = adjustment.get_upper() - adjustment.get_lower() - adjustment.get_page_size()
-        if scrollable <= 0.5:
-            return False  # nothing to scroll: alternate screen or no history yet
-        if controller.get_unit() == Gdk.ScrollUnit.SURFACE:
-            # Touchpad: GTK reports pixels. Move the history as far as the finger moved.
-            speed = float(self.settings.get("touchpad_scroll_speed") or 1.0)
-            self._scroll_remainder += dy / max(self.get_char_height(), 1) * speed
-        else:
-            # Mouse wheel: GTK reports clicks. Scroll a fixed number of lines per click.
-            lines = max(1, int(self.settings.get("scroll_lines") or 3))
-            self._scroll_remainder += dy * lines
-        step = int(self._scroll_remainder)
-        if step == 0:
-            return True  # a touchpad fraction; wait until it adds up to a line
-        self._scroll_remainder -= step
-        lower = adjustment.get_lower()
-        upper = adjustment.get_upper() - adjustment.get_page_size()
-        adjustment.set_value(min(max(adjustment.get_value() + step, lower), upper))
-        return True
 
     # -- context menu --------------------------------------------------------
     def _setup_actions(self):

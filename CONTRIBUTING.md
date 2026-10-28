@@ -72,12 +72,6 @@ XDG_CONFIG_HOME=/tmp/termit-dev/config XDG_DATA_HOME=/tmp/termit-dev/data python
 The `Release` workflow checks that the tag matches the version in the sources and publishes a
 GitHub release with the notes taken from the changelog.
 
-## Debugging scrolling
-
-Run `TERMIT_DEBUG_SCROLL=1 python3 -m termit` (or `TERMIT_DEBUG_SCROLL=1 termit`) and scroll in the
-terminal: every wheel or touchpad event is printed to stderr with its unit (`wheel` or `surface`),
-delta and the current scrollback position.
-
 ## Reporting bugs
 
 Open an issue at https://github.com/aripdcom/termit/issues with your distribution, the versions of GTK, libadwaita and VTE (for example `pkg-config --modversion gtk4 libadwaita-1 vte-2.91-gtk4`), and the steps to reproduce. Terminal output from `python3 -m termit` is very helpful.
